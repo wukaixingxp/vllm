@@ -10,8 +10,6 @@ from tqdm import tqdm
 from transformers import (AutoModelForCausalLM, AutoTokenizer,
                           PreTrainedTokenizerBase)
 
-from vllm.model_executor.layers.quantization import QUANTIZATION_METHODS
-
 
 def sample_requests(
     dataset_path: str,
@@ -73,7 +71,6 @@ def run_vllm(
     max_model_len: Optional[int],
     enforce_eager: bool,
     kv_cache_dtype: str,
-    quantization_param_path: Optional[str],
     device: str,
     enable_prefix_caching: bool,
     enable_chunked_prefill: bool,
@@ -94,7 +91,6 @@ def run_vllm(
         gpu_memory_utilization=gpu_memory_utilization,
         enforce_eager=enforce_eager,
         kv_cache_dtype=kv_cache_dtype,
-        quantization_param_path=quantization_param_path,
         device=device,
         enable_prefix_caching=enable_prefix_caching,
         download_dir=download_dir,
@@ -226,7 +222,7 @@ def main(args: argparse.Namespace):
             args.tensor_parallel_size, args.seed, args.n, args.use_beam_search,
             args.trust_remote_code, args.dtype, args.max_model_len,
             args.enforce_eager, args.kv_cache_dtype,
-            args.quantization_param_path, args.device,
+            args.device,
             args.enable_prefix_caching, args.enable_chunked_prefill,
             args.max_num_batched_tokens, args.gpu_memory_utilization,
             args.download_dir)
@@ -242,8 +238,11 @@ def main(args: argparse.Namespace):
         raise ValueError(f"Unknown backend: {args.backend}")
     total_num_tokens = sum(prompt_len + output_len
                            for _, prompt_len, output_len in requests)
+    print(f"Time Used: {elapsed_time:.2f} second, "
+          f"Total token: {total_num_tokens}")
     print(f"Throughput: {len(requests) / elapsed_time:.2f} requests/s, "
           f"{total_num_tokens / elapsed_time:.2f} tokens/s")
+    print(f"Memory used: {torch.cuda.max_memory_reserved() / 1e9:.02f} GB")
 
 
 if __name__ == "__main__":
@@ -269,7 +268,7 @@ if __name__ == "__main__":
     parser.add_argument("--tokenizer", type=str, default=None)
     parser.add_argument('--quantization',
                         '-q',
-                        choices=[*QUANTIZATION_METHODS, None],
+                        choices=['awq', 'gptq', 'squeezellm', None],
                         default=None)
     parser.add_argument("--tensor-parallel-size", "-tp", type=int, default=1)
     parser.add_argument("--n",
