@@ -107,11 +107,11 @@
     {%- elif message.role == "tool" or message.role == "ipython" %}
         {{- "<|header_start|>ipython<|header_end|>\n\n" }}
         {%- if message.content is string %}
-            {{- message.content | tojson }}
+            {{- { "tool_output": message.content } | tojson }}
         {%- else %}
             {%- for content in message['content']  %}
                 {%- if content['type']  == 'text' %}
-                    {{- content['text'] | tojson }}
+                    {{- { "tool_output": content['text']  } | tojson }}
                 {%- endif %}
             {%- endfor %}
         {%- endif %}
