@@ -76,8 +76,7 @@
             {%- endfor %}
         {%- endif %}
         {{- "<|eot|>" }}
-    {%- elif 'tool_calls' in message and message.tool_calls|length > 0 %}
-        {%- set tool_call = message.tool_calls[0].function %}
+    {%- elif 'tool_calls' in message%}
         {{- '<|header_start|>assistant<|header_end|>\n\n' -}}
         {%- if message['content'] is string %}
             {{- message['content'] }}
@@ -94,16 +93,17 @@
             {%- if tool_call.function is defined %}
                 {%- set tool_call = tool_call.function %}
             {%- endif %}
-            {{- tool_call.name + '(' -}}
+            {{- '[' + tool_call.name + '(' -}}
             {%- for param in tool_call.arguments %}
-                {{- param + '=' -}}
+                {{- param + '="' -}}
                 {{- "%s" | format(tool_call.arguments[param]) -}}
+               {{- '"' -}}
                 {% if not loop.last %}, {% endif %}
             {%- endfor %}
-            {{- ')' -}}
+            {{- ')]' -}}
             {% if not loop.last %}, {% endif %}
         {%- endfor %}
-        {{- "<|eom|>" }}
+        {{- "<|eot|>" }}
     {%- elif message.role == "tool" or message.role == "ipython" %}
         {{- "<|header_start|>ipython<|header_end|>\n\n" }}
         {%- if message.content is string %}
@@ -115,7 +115,7 @@
                 {%- endif %}
             {%- endfor %}
         {%- endif %}
-        {{- "<|eom|>" }}
+        {{- "<|eot|>" }}
     {%- endif %}
 {%- endfor %}
 {%- if add_generation_prompt %}
