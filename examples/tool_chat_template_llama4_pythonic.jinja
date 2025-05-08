@@ -77,6 +77,8 @@
         {%- endif %}
         {{- "<|eot|>" }}
     {%- elif 'tool_calls' in message%}
+        {#- assume tool_calls are always coming from assistant #}
+        {%- if message.role == 'assistant' %}
         {{- '<|header_start|>assistant<|header_end|>\n\n' -}}
         {%- if message['content'] is string %}
             {{- message['content'] }}
@@ -104,6 +106,8 @@
             {% if not loop.last %}, {% endif %}
         {%- endfor %}
         {{- "<|eot|>" }}
+{%- endif %}
+
     {%- elif message.role == "tool" or message.role == "ipython" %}
         {{- "<|header_start|>ipython<|header_end|>\n\n" }}
         {%- if message.content is string %}
