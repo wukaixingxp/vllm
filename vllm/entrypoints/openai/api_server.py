@@ -399,6 +399,12 @@ def create_server_unix_socket(path: str) -> socket.socket:
 
 
 def validate_api_server_args(args):
+    # Copy reasoning_parser to structured_outputs_config if set via CLI
+    # This mirrors what EngineArgs.create_vllm_config() does, but needs to
+    # happen before the API router is initialized
+    if hasattr(args, 'reasoning_parser') and args.reasoning_parser:
+        args.structured_outputs_config.reasoning_parser = args.reasoning_parser
+
     valid_tool_parses = ToolParserManager.list_registered()
     if args.enable_auto_tool_choice and args.tool_call_parser not in valid_tool_parses:
         raise KeyError(

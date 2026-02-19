@@ -1,0 +1,285 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.9, pytest-8.3.5, pluggy-1.6.0 -- /home/kaiwu/.conda/envs/evals/bin/python3.12
+cachedir: .pytest_cache
+metadata: {'Python': '3.12.9', 'Platform': 'Linux-6.4.3-0_fbk20_zion_2830_g3e5ab162667d-x86_64-with-glibc2.34', 'Packages': {'pytest': '8.3.5', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.9.0', 'metadata': '3.1.1', 'json-report': '1.5.0'}}
+rootdir: /home/kaiwu/work/kaiwu/vllm
+configfile: pyproject.toml
+plugins: anyio-4.9.0, metadata-3.1.1, json-report-1.5.0
+collecting ... collected 1 item
+
+test_llama4_pythonic_tool_parser.py::test_tool_call[python_tag_streaming] FAILED [100%]
+
+=================================== FAILURES ===================================
+_____________________ test_tool_call[python_tag_streaming] _____________________
+
+streaming = True
+model_output = "<|python_start|>[get_weather(city='San Francisco', metric='celsius')]<|python_end|>"
+expected_tool_calls = [FunctionCall(name='get_weather', arguments='{"city": "San Francisco", "metric": "celsius"}')]
+
+    @pytest.mark.parametrize("streaming, model_output, expected_tool_calls",
+                             TEST_CASES)
+    def test_tool_call(streaming: bool, model_output: str,
+                       expected_tool_calls: list[FunctionCall]):
+        mock_tokenizer = MagicMock()
+        tool_parser: ToolParser = ToolParserManager.get_tool_parser(
+            "llama4_pythonic")(mock_tokenizer)
+    
+        content, tool_calls = run_tool_extraction(tool_parser,
+                                                  model_output,
+                                                  streaming=streaming)
+    
+>       assert content is None
+E       AssertionError: assert '<|python_start|>' is None
+
+test_llama4_pythonic_tool_parser.py:171: AssertionError
+----------------------------- Captured stdout call -----------------------------
+current_text <
+current_text <|
+current_text <|p
+current_text <|py
+current_text <|pyt
+current_text <|pyth
+current_text <|pytho
+current_text <|python
+current_text <|python_
+current_text <|python_s
+current_text <|python_st
+current_text <|python_sta
+current_text <|python_star
+current_text <|python_start
+current_text <|python_start|
+current_text 
+current_text [
+current_text [g
+current_text [ge
+current_text [get
+current_text [get_
+current_text [get_w
+current_text [get_we
+current_text [get_wea
+current_text [get_weat
+current_text [get_weath
+current_text [get_weathe
+current_text [get_weather
+current_text [get_weather(
+current_text [get_weather(c
+current_text [get_weather(ci
+current_text [get_weather(cit
+current_text [get_weather(city
+current_text [get_weather(city=
+current_text [get_weather(city='
+current_text [get_weather(city='S
+current_text [get_weather(city='Sa
+current_text [get_weather(city='San
+current_text [get_weather(city='San 
+current_text [get_weather(city='San F
+current_text [get_weather(city='San Fr
+current_text [get_weather(city='San Fra
+current_text [get_weather(city='San Fran
+current_text [get_weather(city='San Franc
+current_text [get_weather(city='San Franci
+current_text [get_weather(city='San Francis
+current_text [get_weather(city='San Francisc
+current_text [get_weather(city='San Francisco
+current_text [get_weather(city='San Francisco'
+current_text [get_weather(city='San Francisco',
+current_text [get_weather(city='San Francisco', 
+current_text [get_weather(city='San Francisco', m
+current_text [get_weather(city='San Francisco', me
+current_text [get_weather(city='San Francisco', met
+current_text [get_weather(city='San Francisco', metr
+current_text [get_weather(city='San Francisco', metri
+current_text [get_weather(city='San Francisco', metric
+current_text [get_weather(city='San Francisco', metric=
+current_text [get_weather(city='San Francisco', metric='
+current_text [get_weather(city='San Francisco', metric='c
+current_text [get_weather(city='San Francisco', metric='ce
+current_text [get_weather(city='San Francisco', metric='cel
+current_text [get_weather(city='San Francisco', metric='cels
+current_text [get_weather(city='San Francisco', metric='celsi
+current_text [get_weather(city='San Francisco', metric='celsiu
+current_text [get_weather(city='San Francisco', metric='celsius
+current_text [get_weather(city='San Francisco', metric='celsius'
+current_text [get_weather(city='San Francisco', metric='celsius')
+current_text [get_weather(city='San Francisco', metric='celsius')]
+current_text [get_weather(city='San Francisco', metric='celsius')]<
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Error trying to handle streaming tool call.
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Traceback (most recent call last):
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/work/kaiwu/vllm/vllm/entrypoints/openai/tool_parsers/llama4_pythonic_tool_parser.py", line 117, in extract_tool_calls_streaming
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     module = ast.parse(valid_text)
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/.conda/envs/evals/lib/python3.12/ast.py", line 52, in parse
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     return compile(source, filename, mode, flags,
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "<unknown>", line 1
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     [get_weather(city='San Francisco', metric='celsius')]<
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]                                                           ^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] SyntaxError: invalid syntax
+current_text [get_weather(city='San Francisco', metric='celsius')]<|
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Error trying to handle streaming tool call.
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Traceback (most recent call last):
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/work/kaiwu/vllm/vllm/entrypoints/openai/tool_parsers/llama4_pythonic_tool_parser.py", line 117, in extract_tool_calls_streaming
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     module = ast.parse(valid_text)
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/.conda/envs/evals/lib/python3.12/ast.py", line 52, in parse
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     return compile(source, filename, mode, flags,
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "<unknown>", line 1
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     [get_weather(city='San Francisco', metric='celsius')]<|
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]                                                           ^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] SyntaxError: invalid syntax
+current_text [get_weather(city='San Francisco', metric='celsius')]<|p
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Error trying to handle streaming tool call.
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Traceback (most recent call last):
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/work/kaiwu/vllm/vllm/entrypoints/openai/tool_parsers/llama4_pythonic_tool_parser.py", line 117, in extract_tool_calls_streaming
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     module = ast.parse(valid_text)
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/.conda/envs/evals/lib/python3.12/ast.py", line 52, in parse
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     return compile(source, filename, mode, flags,
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "<unknown>", line 1
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     [get_weather(city='San Francisco', metric='celsius')]<|p
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]                                                           ^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] SyntaxError: invalid syntax
+current_text [get_weather(city='San Francisco', metric='celsius')]<|py
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Error trying to handle streaming tool call.
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Traceback (most recent call last):
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/work/kaiwu/vllm/vllm/entrypoints/openai/tool_parsers/llama4_pythonic_tool_parser.py", line 117, in extract_tool_calls_streaming
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     module = ast.parse(valid_text)
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/.conda/envs/evals/lib/python3.12/ast.py", line 52, in parse
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     return compile(source, filename, mode, flags,
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "<unknown>", line 1
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     [get_weather(city='San Francisco', metric='celsius')]<|py
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]                                                           ^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] SyntaxError: invalid syntax
+current_text [get_weather(city='San Francisco', metric='celsius')]<|pyt
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Error trying to handle streaming tool call.
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Traceback (most recent call last):
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/work/kaiwu/vllm/vllm/entrypoints/openai/tool_parsers/llama4_pythonic_tool_parser.py", line 117, in extract_tool_calls_streaming
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     module = ast.parse(valid_text)
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/.conda/envs/evals/lib/python3.12/ast.py", line 52, in parse
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     return compile(source, filename, mode, flags,
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "<unknown>", line 1
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     [get_weather(city='San Francisco', metric='celsius')]<|pyt
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]                                                           ^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] SyntaxError: invalid syntax
+current_text [get_weather(city='San Francisco', metric='celsius')]<|pyth
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Error trying to handle streaming tool call.
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Traceback (most recent call last):
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/work/kaiwu/vllm/vllm/entrypoints/openai/tool_parsers/llama4_pythonic_tool_parser.py", line 117, in extract_tool_calls_streaming
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     module = ast.parse(valid_text)
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/.conda/envs/evals/lib/python3.12/ast.py", line 52, in parse
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     return compile(source, filename, mode, flags,
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "<unknown>", line 1
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     [get_weather(city='San Francisco', metric='celsius')]<|pyth
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]                                                           ^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] SyntaxError: invalid syntax
+current_text [get_weather(city='San Francisco', metric='celsius')]<|pytho
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Error trying to handle streaming tool call.
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Traceback (most recent call last):
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/work/kaiwu/vllm/vllm/entrypoints/openai/tool_parsers/llama4_pythonic_tool_parser.py", line 117, in extract_tool_calls_streaming
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     module = ast.parse(valid_text)
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/.conda/envs/evals/lib/python3.12/ast.py", line 52, in parse
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     return compile(source, filename, mode, flags,
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "<unknown>", line 1
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     [get_weather(city='San Francisco', metric='celsius')]<|pytho
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]                                                           ^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] SyntaxError: invalid syntax
+current_text [get_weather(city='San Francisco', metric='celsius')]<|python
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Error trying to handle streaming tool call.
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Traceback (most recent call last):
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/work/kaiwu/vllm/vllm/entrypoints/openai/tool_parsers/llama4_pythonic_tool_parser.py", line 117, in extract_tool_calls_streaming
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     module = ast.parse(valid_text)
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/.conda/envs/evals/lib/python3.12/ast.py", line 52, in parse
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     return compile(source, filename, mode, flags,
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "<unknown>", line 1
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     [get_weather(city='San Francisco', metric='celsius')]<|python
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]                                                           ^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] SyntaxError: invalid syntax
+current_text [get_weather(city='San Francisco', metric='celsius')]<|python_
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Error trying to handle streaming tool call.
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Traceback (most recent call last):
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/work/kaiwu/vllm/vllm/entrypoints/openai/tool_parsers/llama4_pythonic_tool_parser.py", line 117, in extract_tool_calls_streaming
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     module = ast.parse(valid_text)
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/.conda/envs/evals/lib/python3.12/ast.py", line 52, in parse
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     return compile(source, filename, mode, flags,
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "<unknown>", line 1
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     [get_weather(city='San Francisco', metric='celsius')]<|python_
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]                                                           ^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] SyntaxError: invalid syntax
+current_text [get_weather(city='San Francisco', metric='celsius')]<|python_e
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Error trying to handle streaming tool call.
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Traceback (most recent call last):
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/work/kaiwu/vllm/vllm/entrypoints/openai/tool_parsers/llama4_pythonic_tool_parser.py", line 117, in extract_tool_calls_streaming
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     module = ast.parse(valid_text)
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/.conda/envs/evals/lib/python3.12/ast.py", line 52, in parse
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     return compile(source, filename, mode, flags,
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "<unknown>", line 1
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     [get_weather(city='San Francisco', metric='celsius')]<|python_e
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]                                                           ^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] SyntaxError: invalid syntax
+current_text [get_weather(city='San Francisco', metric='celsius')]<|python_en
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Error trying to handle streaming tool call.
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Traceback (most recent call last):
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/work/kaiwu/vllm/vllm/entrypoints/openai/tool_parsers/llama4_pythonic_tool_parser.py", line 117, in extract_tool_calls_streaming
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     module = ast.parse(valid_text)
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/.conda/envs/evals/lib/python3.12/ast.py", line 52, in parse
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     return compile(source, filename, mode, flags,
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "<unknown>", line 1
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     [get_weather(city='San Francisco', metric='celsius')]<|python_en
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]                                                           ^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] SyntaxError: invalid syntax
+current_text [get_weather(city='San Francisco', metric='celsius')]<|python_end
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Error trying to handle streaming tool call.
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Traceback (most recent call last):
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/work/kaiwu/vllm/vllm/entrypoints/openai/tool_parsers/llama4_pythonic_tool_parser.py", line 117, in extract_tool_calls_streaming
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     module = ast.parse(valid_text)
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/.conda/envs/evals/lib/python3.12/ast.py", line 52, in parse
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     return compile(source, filename, mode, flags,
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "<unknown>", line 1
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     [get_weather(city='San Francisco', metric='celsius')]<|python_end
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]                                                           ^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] SyntaxError: invalid syntax
+current_text [get_weather(city='San Francisco', metric='celsius')]<|python_end|
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Error trying to handle streaming tool call.
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] Traceback (most recent call last):
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/work/kaiwu/vllm/vllm/entrypoints/openai/tool_parsers/llama4_pythonic_tool_parser.py", line 117, in extract_tool_calls_streaming
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     module = ast.parse(valid_text)
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]              ^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "/home/kaiwu/.conda/envs/evals/lib/python3.12/ast.py", line 52, in parse
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     return compile(source, filename, mode, flags,
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]   File "<unknown>", line 1
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]     [get_weather(city='San Francisco', metric='celsius')]<|python_end|
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177]                                                           ^
+ERROR 05-21 09:08:05 [llama4_pythonic_tool_parser.py:177] SyntaxError: invalid syntax
+current_text [get_weather(city='San Francisco', metric='celsius')]
+=============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: Type google._upb._message.MessageMapContainer uses PyType_Spec with a metaclass that has custom tp_new. This is deprecated and will no longer be allowed in Python 3.14.
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: Type google._upb._message.ScalarMapContainer uses PyType_Spec with a metaclass that has custom tp_new. This is deprecated and will no longer be allowed in Python 3.14.
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED test_llama4_pythonic_tool_parser.py::test_tool_call[python_tag_streaming]
+======================== 1 failed, 2 warnings in 0.23s =========================

@@ -91,7 +91,37 @@ class HarmonyBrowserTool(Tool):
         return tool_output_msgs
 
     async def get_result_parsable_context(self, context: "ConversationContext") -> Any:
-        raise NotImplementedError("Not implemented yet")
+        """
+        This function converts parsable context types to harmony and
+        back so we can use GPTOSS demo browser tool
+        """
+        from vllm.entrypoints.openai.responses.context import ParsableContext
+
+        assert isinstance(context, ParsableContext)
+
+        last_msg = context.parser.response_messages[-1]
+        args = json.loads(last_msg.arguments)
+
+        # Convert to Harmony Message format for browser tool
+        last_msg_harmony = Message(
+            author=Author(role="assistant", name=None),
+            content=[TextContent(text=json.dumps(args))],
+            channel="analysis",
+            recipient="browser.search",
+            content_type="code",
+        )
+
+        tool_output_msgs = []
+        async for msg in self.browser_tool.process(last_msg_harmony):
+            processed = ResponseFunctionToolCallOutputItem(
+                id=f"fco_{random_uuid()}",
+                type="function_call_output",
+                call_id=f"call_{random_uuid()}",
+                output=msg.content[0].text if msg.content else "",
+                status="completed",
+            )
+            tool_output_msgs.append(processed)
+        return tool_output_msgs
 
     @property
     def tool_config(self) -> Any:
