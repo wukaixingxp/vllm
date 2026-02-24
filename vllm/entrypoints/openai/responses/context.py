@@ -28,6 +28,7 @@ from vllm.entrypoints.openai.engine.protocol import (
     FunctionCall,
 )
 from vllm.entrypoints.openai.parser.harmony_utils import (
+    MCP_BUILTIN_TOOLS,
     get_encoding,
     get_streamable_parser_for_assistant,
     render_for_completion,
@@ -517,12 +518,14 @@ class HarmonyContext(ConversationContext):
         self,
         messages: list,
         available_tools: list[str],
+        mcp_function_tools: dict[str, str] | None = None,
     ):
         self._messages = messages
         self.finish_reason: str | None = None
         self.available_tools = available_tools
         self._tool_sessions: dict[str, ClientSession | Tool] = {}
         self.called_tools: set[str] = set()
+        self.mcp_function_tools = mcp_function_tools or {}
 
         self.parser = get_streamable_parser_for_assistant()
         self.num_init_messages = len(messages)
@@ -673,6 +676,11 @@ class HarmonyContext(ConversationContext):
             return "python" in self.available_tools
         if recipient.startswith("container."):
             return "container" in self.available_tools
+        # Check for MCP-backed function tools
+        if recipient.startswith("functions."):
+            func_name = recipient.split(".", 1)[1]
+            if func_name in self.mcp_function_tools:
+                return True
         return False
 
     async def call_tool(self) -> list[Message]:
@@ -693,6 +701,12 @@ class HarmonyContext(ConversationContext):
                 return await self.call_container_tool(
                     self._tool_sessions["container"], last_msg
                 )
+            elif recipient.startswith("functions."):
+                func_name = recipient.split(".", 1)[1]
+                if func_name in self.mcp_function_tools:
+                    return await self.call_mcp_function_tool(
+                        func_name, last_msg
+                    )
         raise ValueError("No tool call found")
 
     def render_for_completion(self) -> list[int]:
@@ -759,10 +773,22 @@ class HarmonyContext(ConversationContext):
         if tool_server:
             for tool_name in self.available_tools:
                 if tool_name not in self._tool_sessions:
-                    tool_type = _map_tool_name_to_tool_type(tool_name)
-                    headers = (
-                        mcp_tools[tool_type].headers if tool_type in mcp_tools else None
-                    )
+                    # For built-in tools, look up headers from mcp_tools
+                    if tool_name in _TOOL_NAME_TO_TYPE_MAP:
+                        tool_type = _map_tool_name_to_tool_type(tool_name)
+                        headers = (
+                            mcp_tools[tool_type].headers
+                            if tool_type in mcp_tools
+                            else None
+                        )
+                    else:
+                        # Custom MCP namespace — find headers from any
+                        # matching non-built-in MCP tool
+                        headers = None
+                        for label, mcp_tool in mcp_tools.items():
+                            if label not in MCP_BUILTIN_TOOLS:
+                                headers = mcp_tool.headers
+                                break
                     tool_session = await exit_stack.enter_async_context(
                         tool_server.new_session(tool_name, request_id, headers)
                     )
@@ -800,6 +826,33 @@ class HarmonyContext(ConversationContext):
         else:
             args = json.loads(last_msg.content[0].text)
         result = await tool_session.call_tool(tool_name, args)
+        result_str = result.content[0].text
+        content = TextContent(text=result_str)
+        author = Author(role=Role.TOOL, name=last_msg.recipient)
+        return [
+            Message(
+                author=author,
+                content=[content],
+                recipient=Role.ASSISTANT,
+                channel=last_msg.channel,
+            )
+        ]
+
+    async def call_mcp_function_tool(
+        self, func_name: str, last_msg: Message
+    ) -> list[Message]:
+        """Call a custom MCP tool that was injected as a function tool."""
+        namespace = self.mcp_function_tools[func_name]
+        self.called_tools.add(namespace)
+        tool_session = self._tool_sessions[namespace]
+        if envs.VLLM_TOOL_JSON_ERROR_AUTOMATIC_RETRY:
+            try:
+                args = json.loads(last_msg.content[0].text)
+            except json.JSONDecodeError as e:
+                return _create_json_parse_error_messages(last_msg, e)
+        else:
+            args = json.loads(last_msg.content[0].text)
+        result = await tool_session.call_tool(func_name, args)
         result_str = result.content[0].text
         content = TextContent(text=result_str)
         author = Author(role=Role.TOOL, name=last_msg.recipient)

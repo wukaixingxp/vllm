@@ -154,6 +154,7 @@ def create_tool_definition(tool: ChatCompletionToolsParam | Tool):
 def get_developer_message(
     instructions: str | None = None,
     tools: list[Tool | ChatCompletionToolsParam] | None = None,
+    mcp_function_tool_descriptions: list[ToolDescription] | None = None,
 ) -> Message:
     dev_msg_content = DeveloperContent.new()
     if instructions is not None and not envs.VLLM_GPT_OSS_HARMONY_SYSTEM_INSTRUCTIONS:
@@ -165,7 +166,12 @@ def get_developer_message(
                 "web_search_preview",
                 "code_interpreter",
                 "container",
+                "mcp",
             ):
+                # These are built-in tools that are added to the system message.
+                # MCP tools that map to built-ins are handled via system message.
+                # Non-built-in MCP tools are injected via
+                # mcp_function_tool_descriptions.
                 pass
 
             elif tool.type == "function":
@@ -176,9 +182,20 @@ def get_developer_message(
             function_tool_descriptions = [
                 create_tool_definition(tool) for tool in function_tools
             ]
+        else:
+            function_tool_descriptions = []
+        # Add MCP-backed function tool descriptions
+        if mcp_function_tool_descriptions:
+            function_tool_descriptions.extend(mcp_function_tool_descriptions)
+        if function_tool_descriptions:
             dev_msg_content = dev_msg_content.with_function_tools(
                 function_tool_descriptions
             )
+    elif mcp_function_tool_descriptions:
+        # No regular tools but we have MCP function tools
+        dev_msg_content = dev_msg_content.with_function_tools(
+            mcp_function_tool_descriptions
+        )
     dev_msg = Message.from_role_and_content(Role.DEVELOPER, dev_msg_content)
     return dev_msg
 

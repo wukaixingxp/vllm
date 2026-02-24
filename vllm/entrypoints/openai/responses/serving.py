@@ -58,6 +58,7 @@ from vllm.entrypoints.openai.engine.serving import (
 )
 from vllm.entrypoints.openai.models.serving import OpenAIServingModels
 from vllm.entrypoints.openai.parser.harmony_utils import (
+    MCP_BUILTIN_TOOLS,
     construct_harmony_previous_input_messages,
     get_developer_message,
     get_stop_tokens_for_assistant_actions,
@@ -420,6 +421,15 @@ class OpenAIServingResponses(OpenAIServing):
         else:
             assert len(builtin_tool_list) == 0
             available_tools = []
+
+        # Add custom MCP namespaces to available_tools
+        mcp_function_tool_map = getattr(
+            self, '_mcp_function_tool_map', {}
+        )
+        for ns in set(mcp_function_tool_map.values()):
+            if ns not in available_tools:
+                available_tools.append(ns)
+
         try:
             tokenizer = self.renderer.get_tokenizer()
 
@@ -449,9 +459,17 @@ class OpenAIServingResponses(OpenAIServing):
                 context: ConversationContext
                 if self.use_harmony:
                     if request.stream:
-                        context = StreamingHarmonyContext(messages, available_tools)
+                        context = StreamingHarmonyContext(
+                            messages,
+                            available_tools,
+                            mcp_function_tools=mcp_function_tool_map,
+                        )
                     else:
-                        context = HarmonyContext(messages, available_tools)
+                        context = HarmonyContext(
+                            messages,
+                            available_tools,
+                            mcp_function_tools=mcp_function_tool_map,
+                        )
                 else:
                     if envs.VLLM_USE_EXPERIMENTAL_PARSER_CONTEXT:
                         # This is a feature in development for parsing
@@ -1042,10 +1060,56 @@ class OpenAIServingResponses(OpenAIServing):
         prev_response: ResponsesResponse | None,
     ) -> list[OpenAIHarmonyMessage]:
         messages: list[OpenAIHarmonyMessage] = []
+        # Initialize MCP function tool map (populated below for new
+        # conversations with non-built-in MCP tools)
+        self._mcp_function_tool_map: dict[str, str] = {}
         if prev_response is None:
             # New conversation.
             tool_types = extract_tool_types(request.tools)
             with_custom_tools = has_custom_tools(tool_types)
+
+            # Collect non-built-in MCP tools to inject as function tools
+            mcp_function_tool_descriptions = []
+            if self.tool_server is not None:
+                allowed_tools_map = _extract_allowed_tools_from_mcp_requests(
+                    request.tools
+                )
+                for tool in request.tools:
+                    if not isinstance(tool, Mcp):
+                        continue
+                    if tool.server_label in MCP_BUILTIN_TOOLS:
+                        continue
+                    allowed = allowed_tools_map.get(tool.server_label)
+                    if allowed is None:
+                        # No allowed_tools filter — try to find all tools
+                        # from this server label's namespace
+                        desc = self.tool_server.get_tool_description(
+                            tool.server_label
+                        )
+                        if desc is not None:
+                            for td in desc.tools:
+                                mcp_function_tool_descriptions.append(td)
+                                self._mcp_function_tool_map[td.name] = (
+                                    desc.name
+                                )
+                    else:
+                        # Find each allowed tool by name in any namespace
+                        for tool_name in allowed:
+                            ns = self.tool_server.find_tool_namespace(
+                                tool_name
+                            )
+                            if ns is not None:
+                                desc = self.tool_server.get_tool_description(
+                                    ns
+                                )
+                                if desc is not None:
+                                    for td in desc.tools:
+                                        if td.name == tool_name:
+                                            mcp_function_tool_descriptions.append(td)
+                                            self._mcp_function_tool_map[td.name] = ns
+                                            break
+                if mcp_function_tool_descriptions:
+                    with_custom_tools = True
 
             sys_msg = self._construct_harmony_system_input_message(
                 request, with_custom_tools, tool_types
@@ -1053,7 +1117,13 @@ class OpenAIServingResponses(OpenAIServing):
             messages.append(sys_msg)
             if with_custom_tools:
                 dev_msg = get_developer_message(
-                    instructions=request.instructions, tools=request.tools
+                    instructions=request.instructions,
+                    tools=request.tools,
+                    mcp_function_tool_descriptions=(
+                        mcp_function_tool_descriptions
+                        if mcp_function_tool_descriptions
+                        else None
+                    ),
                 )
                 messages.append(dev_msg)
             messages += construct_harmony_previous_input_messages(request)

@@ -2,7 +2,7 @@
 # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 from abc import ABC, abstractmethod
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from openai_harmony import ToolDescription, ToolNamespaceConfig
 
@@ -90,6 +90,12 @@ class ToolServer(ABC):
         pass
 
     @abstractmethod
+    def find_tool_namespace(self, tool_name: str) -> Optional[str]:
+        """Find which namespace contains a tool with the given name.
+        Returns namespace name (e.g., 'browser') or None."""
+        pass
+
+    @abstractmethod
     def new_session(
         self, tool_name: str, session_id: str, headers: dict[str, str] | None = None
     ) -> AbstractAsyncContextManager[Any]:
@@ -148,6 +154,13 @@ class MCPToolServer(ToolServer):
 
     def has_tool(self, tool_name: str):
         return tool_name in self.harmony_tool_descriptions
+
+    def find_tool_namespace(self, tool_name: str) -> Optional[str]:
+        for ns_name, config in self.harmony_tool_descriptions.items():
+            for tool in config.tools:
+                if tool.name == tool_name:
+                    return ns_name
+        return None
 
     def get_tool_description(
         self,
@@ -212,6 +225,9 @@ class DemoToolServer(ToolServer):
 
     def has_tool(self, tool_name: str) -> bool:
         return tool_name in self.tools
+
+    def find_tool_namespace(self, tool_name: str) -> Optional[str]:
+        return None  # DemoToolServer doesn't support custom MCP tools
 
     def get_tool_description(
         self, tool_name: str, allowed_tools: list[str] | None = None
